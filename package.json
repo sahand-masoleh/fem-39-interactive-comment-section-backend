@@ -24,10 +24,17 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.1",
+    "module-alias": "^2.2.2",
     "pg": "^8.7.3"
   },
   "devDependencies": {
     "dotenv": "^16.0.1",
     "nodemon": "^2.0.19"
+  },
+  "_moduleAliases": {
+    "@root": ".",
+    "@db": "./db",
+    "@routes": "./routes",
+    "@utils": "./utils"
   }
 }
