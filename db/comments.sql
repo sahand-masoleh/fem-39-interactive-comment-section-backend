@@ -53,7 +53,7 @@ CREATE TABLE public.posts (
     user_id integer NOT NULL,
     text text NOT NULL,
     date timestamp with time zone DEFAULT now() NOT NULL,
-    votes integer DEFAULT 1
+    votes integer DEFAULT 0
 );
 
 

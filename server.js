@@ -2,8 +2,10 @@ require("module-alias/register");
 const express = require("express");
 const app = express();
 const port = process.env.PORT;
-
 app.use(express.urlencoded({ extended: true }));
+
+const cors = require("cors");
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("Nothing to see here...");
