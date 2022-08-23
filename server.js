@@ -2,13 +2,14 @@ require("module-alias/register");
 const express = require("express");
 const app = express();
 const port = process.env.PORT;
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const cors = require("cors");
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send("Nothing to see here...");
+	res.send("Nothing to see here...");
 });
 
 const users = require("@routes/users");
@@ -20,19 +21,22 @@ app.use("/posts", posts);
 const upvotes = require("@routes/upvotes");
 app.use("/upvotes", upvotes);
 
+const auth = require("@routes/auth");
+app.use("/auth", auth);
+
 app.use((req, res) => {
-  res.status(404);
-  res.json({ success: false, message: "not found" });
+	res.status(404);
+	res.json({ success: false, message: "not found" });
 });
 
 app.use((error, req, res, next) => {
-  res.status(error.status || 500);
-  res.json({
-    success: false,
-    message: error.message || "internal server error",
-  });
+	res.status(error.status || 500);
+	res.json({
+		success: false,
+		message: error.message || "internal server error",
+	});
 });
 
 app.listen(port, () => {
-  console.log(`listening on port ${port}`);
+	console.log(`listening on port ${port}`);
 });

@@ -2,28 +2,31 @@ const router = require("express").Router();
 const db = require("@db/db");
 const checkArgs = require("@utils/checkArgs");
 
-const DEPTH = 5;
+const DEPTH = 999;
 
 router.get("/", async (req, res, next) => {
 	try {
 		const { rows } = await db.query(
 			`
 			WITH RECURSIVE cte AS (
-        (
-          SELECT *, 0 AS depth FROM posts
-          WHERE parent_id IS NULL
-          LIMIT $1
-        )
-        UNION ALL
-        (
-          SELECT e.*, depth+1 FROM posts e
-          INNER JOIN cte s ON s.id = e.parent_id
-          WHERE depth < $1
-          LIMIT $1
-        ) 
+				(
+				SELECT *, 0 AS depth, ARRAY[id] AS path
+				FROM posts
+				WHERE parent_id IS NULL
+				LIMIT $1
+				)
+				UNION
+				(
+				SELECT t2.*, depth+1, path || t2.id
+				FROM posts t2
+				INNER JOIN cte ON cte.id = t2.parent_id
+				WHERE depth < $1
+				LIMIT $1
+				)
 			)
-      SELECT cte.*, users.name FROM cte
-      LEFT JOIN users ON cte.user_id = users.id
+			SELECT cte.*, users.name FROM cte
+			LEFT JOIN users ON cte.user_id = users.id
+			ORDER BY path, date;
 			`,
 			[DEPTH]
 		);
