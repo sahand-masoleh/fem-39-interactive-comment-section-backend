@@ -18,7 +18,7 @@ USERS=$($PSQL '
     )
 ')
 USERS_OWNER=$($PSQL "ALTER TABLE users OWNER TO $OWNER")
-if [[ ($USERS=="CREATE TABLE") && ($USERS_OWNER=="ALTER TABLE") ]]
+if [[ ($USERS = "CREATE TABLE") && ($USERS_OWNER = "ALTER TABLE") ]]
     then echo "TABLE: users --> $OWNER"
 fi
 
@@ -37,7 +37,7 @@ POSTS=$($PSQL '
     )
 ')
 POSTS_OWNER=$($PSQL 'ALTER TABLE posts OWNER TO fem39')
-if [[ ($USERS=="CREATE TABLE") && ($USERS_OWNER=="ALTER TABLE") ]]
+if [[ ($USERS = "CREATE TABLE") && ($USERS_OWNER = "ALTER TABLE") ]]
     then echo "TABLE: posts --> $OWNER"
 fi
 
@@ -52,7 +52,7 @@ UPVOTES=$($PSQL '
     )
 ')
 UPVOTES_OWNER=$($PSQL 'ALTER TABLE upvotes OWNER TO fem39')
-if [[ ($UPVOTES=="CREATE TABLE") && ($UPVOTES_OWNER=="ALTER TABLE") ]]
+if [[ ($UPVOTES = "CREATE TABLE") && ($UPVOTES_OWNER = "ALTER TABLE") ]]
     then echo "TABLE: upvotes --> $OWNER"
 fi
 
@@ -106,9 +106,11 @@ NEW_REPLY=$($PSQL '
     AFTER INSERT OR DELETE ON posts
     FOR EACH ROW EXECUTE FUNCTION count_replies()
 ')
-if [[ ($COUNT_REPLIES=="CREATE FUNCTION") && ($COUNT_REPLIES_OWNER=="ALTER FUNCTION" && $NEW_REPLY=="CREATE TRIGGER") ]]
+if [[ ($COUNT_REPLIES = "CREATE FUNCTION") && ($COUNT_REPLIES_OWNER = "ALTER FUNCTION" && $NEW_REPLY = "CREATE TRIGGER") ]]
     then echo "TRIGGER: new_upvote --> $OWNER"
 fi
+
+echo -e "\n"
 
 USERS_ADDED=0
 POSTS_ADDED=0
@@ -116,37 +118,48 @@ POSTS_ADDED=0
     read
     while IFS="|" read -r ID TEXT PARENT_ID DATE NAME
     do
-        INSERT_USER=$($PSQL "
-            INSERT INTO users(name)
-            SELECT '$NAME'
-            WHERE NOT EXISTS (SELECT '$NAME' FROM users WHERE name='$NAME')
+        INSERT_USER_RESULT=$($PSQL "
+            WITH cte_1 AS (
+                SELECT *, 0 AS is_new FROM users
+                WHERE name = '$NAME'
+            ),
+            cte_2 AS (
+                INSERT INTO users(name)
+                SELECT '$NAME'
+                WHERE NOT EXISTS (SELECT '$NAME' FROM cte_1 WHERE name='$NAME')
+                RETURNING id, 1 AS is_new
+            )
+            SELECT id, is_new FROM cte_1
+            UNION ALL
+            SELECT id, is_new FROM cte_2
         ")
-        if [[ ($INSERT_USER=="INSERT 0 1") ]]
+
+        IFS="|" read USER_ID IS_NEW <<< $INSERT_USER_RESULT
+
+        if [[ ($IS_NEW -eq 1) ]]
         then
             USERS_ADDED=$(($USERS_ADDED+1))
         fi
-
-        USER_ID=$($PSQL "
-            SELECT id FROM users WHERE name = '$NAME'
-        ")
         
-        if [[($PARENT_ID == '')]]
+        if [[ -z $PARENT_ID ]]
         then 
-            INSERT_POST=$($PSQL "
+            INSERT_POST_RESULT=$($PSQL "
                 INSERT INTO posts(user_id, text, date)
                 VALUES ($USER_ID, '$TEXT', '$DATE')
             ")
         else
-            INSERT_POST=$($PSQL "
+            INSERT_POST_RESULT=$($PSQL "
                 INSERT INTO posts(parent_id, user_id, text, date)
                 VALUES ($PARENT_ID, $USER_ID, '$TEXT', '$DATE')
             ")        
         fi
-        if [[ ($INSERT_POST=="INSERT 0 1") ]]
+        if [[ ($INSERT_POST_RESULT = "INSERT 0 1") ]]
         then
             POSTS_ADDED=$(($POSTS_ADDED+1))
         fi
-    done 
+        
+	echo -ne "added $USERS_ADDED users and $POSTS_ADDED posts"\\r
+    done    
 } < data.csv
-echo "added $USERS_ADDED users"
-echo "added $POSTS_ADDED posts"
+
+echo -e "\n"

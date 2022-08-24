@@ -24,7 +24,7 @@ router.get("/", async (req, res, next) => {
 				LIMIT $1
 				)
 			)
-			SELECT cte.*, users.name FROM cte
+			SELECT cte.*, users.name, users.avatar_url FROM cte
 			LEFT JOIN users ON cte.user_id = users.id
 			ORDER BY path, date;
 			`,

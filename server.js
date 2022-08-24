@@ -5,8 +5,11 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 const cors = require("cors");
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 app.get("/", (req, res) => {
 	res.send("Nothing to see here...");
@@ -21,15 +24,13 @@ app.use("/posts", posts);
 const upvotes = require("@routes/upvotes");
 app.use("/upvotes", upvotes);
 
-const auth = require("@routes/auth");
-app.use("/auth", auth);
-
 app.use((req, res) => {
 	res.status(404);
 	res.json({ success: false, message: "not found" });
 });
 
 app.use((error, req, res, next) => {
+	console.error(error.message);
 	res.status(error.status || 500);
 	res.json({
 		success: false,
