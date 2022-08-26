@@ -79,7 +79,7 @@ NEW_UPVOTE=$($PSQL '
     AFTER INSERT OR UPDATE OR DELETE ON upvotes
     FOR EACH ROW EXECUTE FUNCTION count_votes()
 ')
-if [[ ($COUNT_VOTES=="CREATE FUNCTION") && ($COUNT_VOTES_OWNER=="ALTER FUNCTION" && $NEW_UPVOTE=="CREATE TRIGGER") ]]
+if [[ ($COUNT_VOTES = "CREATE FUNCTION") && ($COUNT_VOTES_OWNER=="ALTER FUNCTION" && $NEW_UPVOTE=="CREATE TRIGGER") ]]
     then echo "TRIGGER: new_upvote --> $OWNER"
 fi
 
@@ -110,7 +110,12 @@ if [[ ($COUNT_REPLIES = "CREATE FUNCTION") && ($COUNT_REPLIES_OWNER = "ALTER FUN
     then echo "TRIGGER: new_upvote --> $OWNER"
 fi
 
-echo -e "\n"
+INSERT_DELETED_USER=$($PSQL "INSERT INTO users (name) VALUES ('')")
+if [[ ( $INSERT_DELETED_USER = 'INSERT 0 1' ) ]]
+	then echo "USER: 'deleted'"
+fi
+
+echo
 
 USERS_ADDED=0
 POSTS_ADDED=0
@@ -124,7 +129,7 @@ POSTS_ADDED=0
                 WHERE name = '$NAME'
             ),
             cte_2 AS (
-                INSERT INTO users(name)
+                INSERT INTO users (name)
                 SELECT '$NAME'
                 WHERE NOT EXISTS (SELECT '$NAME' FROM cte_1 WHERE name='$NAME')
                 RETURNING id, 1 AS is_new
@@ -144,12 +149,12 @@ POSTS_ADDED=0
         if [[ -z $PARENT_ID ]]
         then 
             INSERT_POST_RESULT=$($PSQL "
-                INSERT INTO posts(user_id, text, date)
+                INSERT INTO posts (user_id, text, date)
                 VALUES ($USER_ID, '$TEXT', '$DATE')
             ")
         else
             INSERT_POST_RESULT=$($PSQL "
-                INSERT INTO posts(parent_id, user_id, text, date)
+                INSERT INTO posts (parent_id, user_id, text, date)
                 VALUES ($PARENT_ID, $USER_ID, '$TEXT', '$DATE')
             ")        
         fi

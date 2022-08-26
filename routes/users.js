@@ -15,7 +15,7 @@ router.get("/check", authorize, async (req, res, next) => {
 	try {
 		const { rows } = await db.query(
 			`
-			SELECT avatar_url, url, name
+			SELECT id, avatar_url, url, name
 			FROM users
 			WHERE id = $1
 		`,
@@ -85,7 +85,7 @@ router.post("/login", async (req, res, next) => {
 			sameSite: "none",
 			secure: true,
 		});
-		res.json({ avatar_url, url, name });
+		res.redirect("../users/check");
 	} catch (error) {
 		next(error);
 	}
