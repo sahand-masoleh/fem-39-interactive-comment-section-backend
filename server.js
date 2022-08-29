@@ -9,7 +9,7 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const cors = require("cors");
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 
 app.get("/", (req, res) => {
 	res.send("Nothing to see here...");
