@@ -5,37 +5,11 @@ const authorize = require("@middleware/authorize");
 const ErrorWithStatus = require("@utils/ErrorWithStatus");
 const getQuery = require("@utils/getQuery");
 
-const LIMIT = 999;
-const DEPTH = 999;
-
 router.get("/", async (req, res, next) => {
 	try {
-		const query = getQuery("date-asc");
-		const { rows } = await db.query(
-			// depth for limiting by depth
-			// path for the frontend
-			// seq for sorting
-			`
-			WITH RECURSIVE cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
-				(
-				SELECT *, 0, ARRAY[id], ${query[0]}
-				FROM posts
-				WHERE parent_id IS NULL
-				${query[1]}
-				LIMIT $1
-				)
-				UNION ALL
-				SELECT t2.*, depth+1, path || t2.id, ${query[2]}
-				FROM posts t2, cte
-				WHERE cte.id = t2.parent_id AND depth < $2
-			) 
-			SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
-			FROM cte
-			LEFT JOIN users ON cte.user_id = users.id
-			ORDER BY seq
-			`,
-			[LIMIT, DEPTH]
-		);
+		const { order, page } = req.query;
+		const query = getQuery(order, page);
+		const { rows } = await db.query(query);
 		res.json(rows);
 	} catch (error) {
 		next(error);

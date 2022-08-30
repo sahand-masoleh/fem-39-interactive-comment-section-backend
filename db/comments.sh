@@ -167,4 +167,24 @@ POSTS_ADDED=0
     done    
 } < data.csv
 
+echo
+
+UPVOTES_ADDED=0
+{
+    read
+    while IFS="|" read -r USER_ID POST_ID IS_UP
+    do
+        INSERT_UPVOTE_RESULT=$($PSQL "
+            INSERT INTO upvotes (post_id, user_id, is_up)
+            VALUES($POST_ID, $USER_ID, $IS_UP)
+        ")
+    
+    if [[ ( $INSERT_UPVOTE_RESULT = 'INSERT 0 1' ) ]]
+	then UPVOTES_ADDED=$(($UPVOTES_ADDED+1))
+    fi
+
+	echo -ne "added $UPVOTES_ADDED upvotes"\\r
+    done
+} < upvotes.csv
+
 echo -e "\n"

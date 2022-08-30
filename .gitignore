@@ -3,3 +3,4 @@
 /.env
 *.sql
 *.csv
+*.ods
