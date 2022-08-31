@@ -2,7 +2,7 @@ const LIMIT = 5;
 const DEPTH = 99;
 
 function getQuery(sort_by, order, page = 0) {
-	const ignore = LIMIT * page;
+	const offset = LIMIT * page;
 	// depth for limiting by depth
 	// path for the frontend
 	// seq for sorting
@@ -14,7 +14,8 @@ function getQuery(sort_by, order, page = 0) {
                     SELECT *, 0, ARRAY[id], ARRAY[votes, id]
                     FROM posts
                     WHERE parent_id IS NULL
-                    LIMIT ${LIMIT + 1} OFFSET ${ignore + 1}
+                    ORDER BY votes ASC
+                    LIMIT ${LIMIT} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [t2.votes, t2.id]
@@ -35,7 +36,8 @@ function getQuery(sort_by, order, page = 0) {
                         SELECT posts.*, 0, ARRAY[id], ARRAY[num_of_users - votes, id], num_of_users
                         FROM posts, total
                         WHERE parent_id IS NULL
-                        LIMIT ${LIMIT + 1} OFFSET ${ignore + 1}
+                        ORDER BY votes DESC
+                        LIMIT ${LIMIT} OFFSET ${offset}
                         )
                         UNION ALL
                         SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [num_of_users - t2.votes, t2.id], num_of_users
@@ -55,7 +57,8 @@ function getQuery(sort_by, order, page = 0) {
                     SELECT *, 0, ARRAY[id], ARRAY[EXTRACT(epoch FROM date)::INT, id]
                     FROM posts
                     WHERE parent_id IS NULL
-                    LIMIT ${LIMIT + 1} OFFSET ${ignore + 1}
+                    ORDER BY date ASC
+                    LIMIT ${LIMIT} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM t2.date)::INT || t2.id
@@ -78,7 +81,7 @@ function getQuery(sort_by, order, page = 0) {
                     FROM posts
                     WHERE parent_id IS NULL
                     ORDER BY date DESC
-                    LIMIT ${LIMIT + 1} OFFSET ${ignore + 1}
+                    LIMIT ${LIMIT} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM (NOW() - t2.date))::INT || t2.id
