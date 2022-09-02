@@ -7,8 +7,9 @@ const getQuery = require("@utils/getQuery");
 
 router.get("/", async (req, res, next) => {
 	try {
-		const { sort_by = "score", order = "asc", page = 0 } = req.query;
-		const query = getQuery(sort_by, order, page);
+		const { from = 0, sort_by = "score", order = "asc", page = 0 } = req.query;
+		// TODO: check if queries are valid
+		const query = getQuery(from * 1, sort_by, order, page);
 		const { rows } = await db.query(query);
 		res.json({ page: page * 1, rows });
 	} catch (error) {

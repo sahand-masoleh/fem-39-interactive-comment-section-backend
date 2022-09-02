@@ -1,8 +1,9 @@
 const LIMIT = 5;
-const DEPTH = 99;
+const DEPTH = 3;
 
-function getQuery(sort_by, order, page = 0) {
+function getQuery(from = 0, sort_by, order, page = 0) {
 	const offset = LIMIT * page;
+	const parentNode = from === 0 ? "parent_id IS NULL" : `id = ${from}`;
 	// depth for limiting by depth
 	// path for the frontend
 	// seq for sorting
@@ -13,7 +14,7 @@ function getQuery(sort_by, order, page = 0) {
                     (
                     SELECT *, 0, ARRAY[id], ARRAY[votes, id]
                     FROM posts
-                    WHERE parent_id IS NULL
+                    WHERE ${parentNode}
                     ORDER BY votes ASC
                     LIMIT ${LIMIT} OFFSET ${offset}
                     )
@@ -35,7 +36,7 @@ function getQuery(sort_by, order, page = 0) {
                         (
                         SELECT posts.*, 0, ARRAY[id], ARRAY[num_of_users - votes, id], num_of_users
                         FROM posts, total
-                        WHERE parent_id IS NULL
+                        WHERE ${parentNode}
                         ORDER BY votes DESC
                         LIMIT ${LIMIT} OFFSET ${offset}
                         )
@@ -56,7 +57,7 @@ function getQuery(sort_by, order, page = 0) {
                     (
                     SELECT *, 0, ARRAY[id], ARRAY[EXTRACT(epoch FROM date)::INT, id]
                     FROM posts
-                    WHERE parent_id IS NULL
+                    WHERE ${parentNode}
                     ORDER BY date ASC
                     LIMIT ${LIMIT} OFFSET ${offset}
                     )
@@ -79,7 +80,7 @@ function getQuery(sort_by, order, page = 0) {
                     (
                     SELECT *, 0, ARRAY[id], ARRAY[EXTRACT(epoch FROM (NOW() - date))::INT, id]
                     FROM posts
-                    WHERE parent_id IS NULL
+                    WHERE ${parentNode}
                     ORDER BY date DESC
                     LIMIT ${LIMIT} OFFSET ${offset}
                     )
