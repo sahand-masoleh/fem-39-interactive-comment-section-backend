@@ -11,7 +11,26 @@ router.get("/", async (req, res, next) => {
 		// TODO: check if queries are valid
 		const query = getQuery(from * 1, sort_by, order, page);
 		const { rows } = await db.query(query);
-		res.json({ page: page * 1, rows });
+
+		// to see if there are more page
+		// pull 6 orphans from the datbase
+		// but return 5 anyway
+
+		let nextPage;
+		const orphans = [];
+		for (let i in rows) {
+			if (rows[i].parent_id === (from * 1 ? from * 1 : null)) {
+				orphans.push(i);
+			}
+		}
+		if (orphans.length > 5) {
+			nextPage = page * 1 + 1;
+			rows.splice(orphans.at(-1));
+		} else {
+			nextPage = -1;
+		}
+
+		res.json({ nextPage, rows });
 	} catch (error) {
 		next(error);
 	}

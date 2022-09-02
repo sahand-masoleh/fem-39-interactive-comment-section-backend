@@ -3,7 +3,7 @@ const DEPTH = 3;
 
 function getQuery(from = 0, sort_by, order, page = 0) {
 	const offset = LIMIT * page;
-	const parentNode = from === 0 ? "parent_id IS NULL" : `id = ${from}`;
+	const parentNode = !from ? "parent_id IS NULL" : `id = ${from}`;
 	// depth for limiting by depth
 	// path for the frontend
 	// seq for sorting
@@ -16,7 +16,7 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts
                     WHERE ${parentNode}
                     ORDER BY votes ASC
-                    LIMIT ${LIMIT} OFFSET ${offset}
+                    LIMIT ${LIMIT + 1} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [t2.votes, t2.id]
@@ -38,7 +38,7 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                         FROM posts, total
                         WHERE ${parentNode}
                         ORDER BY votes DESC
-                        LIMIT ${LIMIT} OFFSET ${offset}
+                        LIMIT ${LIMIT + 1} OFFSET ${offset}
                         )
                         UNION ALL
                         SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [num_of_users - t2.votes, t2.id], num_of_users
@@ -59,7 +59,7 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts
                     WHERE ${parentNode}
                     ORDER BY date ASC
-                    LIMIT ${LIMIT} OFFSET ${offset}
+                    LIMIT ${LIMIT + 1} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM t2.date)::INT || t2.id
@@ -82,7 +82,7 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts
                     WHERE ${parentNode}
                     ORDER BY date DESC
-                    LIMIT ${LIMIT} OFFSET ${offset}
+                    LIMIT ${LIMIT + 1} OFFSET ${offset}
                     )
                     UNION ALL
                     SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM (NOW() - t2.date))::INT || t2.id
