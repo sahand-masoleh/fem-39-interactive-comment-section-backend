@@ -1,13 +1,14 @@
 const LIMIT = 5;
 const DEPTH = 3;
 
-function getQuery(from = 0, sort_by, order, page = 0) {
+function getQuery(from = 0, sort_by, order, page = 0, user_id) {
 	const offset = LIMIT * page;
 	const parentNode = !from ? "parent_id IS NULL" : `id = ${from}`;
 	// depth for limiting by depth
 	// path for the frontend
 	// seq for sorting
 	if (sort_by === "score" && order === "asc") {
+		// prettier-ignore
 		return `
                 WITH RECURSIVE
                 cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
@@ -23,12 +24,10 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts t2, cte
                     WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                 ) 
-                SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
-                FROM cte
-                LEFT JOIN users ON cte.user_id = users.id
-                ORDER BY seq
+                ${selectStatement(user_id)}
             `;
 	} else if (sort_by === "score" && order === "desc") {
+		// prettier-ignore
 		return `
                     WITH RECURSIVE
                     total AS (SELECT COUNT(id) AS num_of_users FROM users),
@@ -45,12 +44,10 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                         FROM posts t2, cte
                         WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                     )
-                    SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
-                    FROM cte
-                    LEFT JOIN users ON cte.user_id = users.id
-                    ORDER BY seq
+                    ${selectStatement(user_id)}
                 `;
 	} else if (sort_by === "date" && order === "asc") {
+		// prettier-ignore
 		return `
                 WITH RECURSIVE
                 cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
@@ -66,14 +63,12 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts t2, cte
                     WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                 ) 
-                SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
-                FROM cte
-                LEFT JOIN users ON cte.user_id = users.id
-                ORDER BY seq
+                ${selectStatement(user_id)}
             `;
 	}
 	// (sort_by === "date" && order === "desc")
 	else {
+		// prettier-ignore
 		return `
                 WITH RECURSIVE
                 cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
@@ -89,12 +84,25 @@ function getQuery(from = 0, sort_by, order, page = 0) {
                     FROM posts t2, cte
                     WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                 ) 
-                SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
-                FROM cte
-                LEFT JOIN users ON cte.user_id = users.id
-                ORDER BY seq
+                ${selectStatement(user_id)}
             `;
 	}
 }
 
 module.exports = getQuery;
+
+function selectStatement(user_id) {
+	// prettier-ignore
+	return `
+            SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
+            ${user_id ? ', is_up': ''}
+            FROM cte
+            LEFT JOIN users ON cte.user_id = users.id
+            ${user_id ? `
+            LEFT JOIN
+                (SELECT post_id, is_up FROM upvotes WHERE user_id = ${user_id}) AS u
+                ON cte.id = u.post_id
+            `: ''}
+            ORDER BY seq
+    `
+}

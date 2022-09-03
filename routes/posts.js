@@ -6,10 +6,16 @@ const ErrorWithStatus = require("@utils/ErrorWithStatus");
 const getQuery = require("@utils/getQuery");
 
 router.get("/", async (req, res, next) => {
+	let user_id;
+	try {
+		authorize(req, res, () => {});
+		user_id = req.user_id;
+	} catch {}
+
 	try {
 		const { from = 0, sort_by = "score", order = "asc", page = 0 } = req.query;
 		// TODO: check if queries are valid
-		const query = getQuery(from * 1, sort_by, order, page);
+		const query = getQuery(from * 1, sort_by, order, page, user_id);
 		const { rows } = await db.query(query);
 
 		// to see if there are more page

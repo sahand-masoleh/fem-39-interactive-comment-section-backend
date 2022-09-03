@@ -2,7 +2,7 @@ const ErrorWithStatus = require("@utils/ErrorWithStatus");
 
 function checkArgs(...args) {
 	[...args].some((e) => {
-		if (!e) throw new ErrorWithStatus("missing argument", 400);
+		if (e === undefined) throw new ErrorWithStatus("missing argument", 400);
 	});
 }
 

@@ -64,11 +64,10 @@ COUNT_VOTES=$($PSQL '
 		WITH sum AS
 			(SELECT SUM(CASE is_up WHEN TRUE THEN 1 ELSE -1 END) AS votes
 			FROM upvotes 
-			WHERE post_id = NEW.post_id 
-			GROUP BY (post_id))
+			WHERE post_id = COALESCE(NEW.post_id, OLD.post_id))
 		UPDATE posts SET votes = sum.votes
 		FROM sum
-		WHERE id = NEW.post_id;
+		WHERE id = COALESCE(NEW.post_id, OLD.post_id);
 		RETURN NEW;
 	END;
 	$$;
@@ -91,8 +90,7 @@ COUNT_REPLIES=$($PSQL '
 		WITH sum AS
 			(SELECT COUNT(id) AS replies
 			FROM posts 
-			WHERE parent_id = NEW.parent_id 
-			GROUP BY (parent_id))
+			WHERE parent_id = NEW.parent_id)
 		UPDATE posts SET replies = sum.replies
 		FROM sum
 		WHERE id = NEW.parent_id;
@@ -103,7 +101,7 @@ COUNT_REPLIES=$($PSQL '
 COUNT_REPLIES_OWNER=$($PSQL 'ALTER FUNCTION count_replies() OWNER TO fem39')
 NEW_REPLY=$($PSQL '
     CREATE TRIGGER new_reply
-    AFTER INSERT OR DELETE ON posts
+    AFTER INSERT ON posts
     FOR EACH ROW EXECUTE FUNCTION count_replies()
 ')
 if [[ ($COUNT_REPLIES = "CREATE FUNCTION") && ($COUNT_REPLIES_OWNER = "ALTER FUNCTION" && $NEW_REPLY = "CREATE TRIGGER") ]]
