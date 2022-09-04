@@ -61,14 +61,19 @@ router.post("/login", async (req, res, next) => {
 			},
 		});
 
-		const { id: githubId, avatar_url, url, name } = await ghUserInfo.json();
+		const {
+			id: githubId,
+			avatar_url,
+			html_url: url,
+			name,
+		} = await ghUserInfo.json();
 
 		const dbUpsert = await db.query(
 			`
 			INSERT INTO users (github_id, avatar_url, url, name)
 			VALUES ($1, $2, $3, $4)
 			ON CONFLICT (github_id)
-			DO UPDATE SET avatar_url = $2, url = 3, name = $4
+			DO UPDATE SET avatar_url = $2, url = $3, name = $4
 			RETURNING id
 		`,
 			[githubId, avatar_url, url, name]

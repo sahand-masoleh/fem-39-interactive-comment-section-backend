@@ -49,13 +49,15 @@ router.post("/", authorize, async (req, res, next) => {
 		checkArgs(parent_id, text);
 
 		const { rows } = await db.query(
+			//prettier-ignore
 			`
 			INSERT INTO posts (parent_id, user_id, text)
 			SELECT $1, $2, $3
-			WHERE EXISTS (
+			${!!parent_id ? `
+				WHERE EXISTS (
 				SELECT FROM posts
-				WHERE id = $1 AND NOT user_id = 1
-			)
+				WHERE id = $1 AND NOT user_id = 1)
+				`: ""}
 			RETURNING *
 			`,
 			[parent_id, user_id, text]

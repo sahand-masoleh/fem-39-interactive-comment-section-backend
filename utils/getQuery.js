@@ -13,14 +13,14 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
                 WITH RECURSIVE
                 cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
                     (
-                    SELECT *, 0, ARRAY[id], ARRAY[votes, id]
+                    SELECT *, 0, ARRAY[id], ARRAY[votes, EXTRACT(epoch FROM date)::INT]
                     FROM posts
                     WHERE ${parentNode}
-                    ORDER BY votes ASC
+                    ORDER BY votes ASC, date ASC
                     LIMIT ${LIMIT + 1} OFFSET ${offset}
                     )
                     UNION ALL
-                    SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [t2.votes, t2.id]
+                    SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM t2.date)::INT
                     FROM posts t2, cte
                     WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                 ) 
@@ -30,17 +30,16 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
 		// prettier-ignore
 		return `
                     WITH RECURSIVE
-                    total AS (SELECT COUNT(id) AS num_of_users FROM users),
                     cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
                         (
-                        SELECT posts.*, 0, ARRAY[id], ARRAY[num_of_users - votes, id], num_of_users
-                        FROM posts, total
+                        SELECT posts.*, 0, ARRAY[id], ARRAY[0 - votes, EXTRACT(epoch FROM date)::INT, id]
+                        FROM posts
                         WHERE ${parentNode}
-                        ORDER BY votes DESC
+                        ORDER BY votes DESC, date ASC
                         LIMIT ${LIMIT + 1} OFFSET ${offset}
                         )
                         UNION ALL
-                        SELECT t2.*, depth+1, path || t2.id, seq || ARRAY [num_of_users - t2.votes, t2.id], num_of_users
+                        SELECT t2.*, depth+1, path || t2.id, seq || EXTRACT(epoch FROM t2.date)::INT
                         FROM posts t2, cte
                         WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
                     )
@@ -94,7 +93,19 @@ module.exports = getQuery;
 function selectStatement(user_id) {
 	// prettier-ignore
 	return `
-            SELECT cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url
+            SELECT
+                cte.id,
+                parent_id,
+                user_id,
+                text,
+                date,
+                votes,
+                replies,
+                depth,
+                path,
+                users.name,
+                users.avatar_url,
+                users.url
             ${user_id ? ', is_up': ''}
             FROM cte
             LEFT JOIN users ON cte.user_id = users.id
