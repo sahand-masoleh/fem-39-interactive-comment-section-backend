@@ -46,12 +46,12 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
 	// prettier-ignore
 	return `
         WITH RECURSIVE
-        cte (id, parent_id, user_id, text, date, votes, replies, is_edited, depth, path, seq) AS (
+        cte (id, parent_id, user_id, text, date, votes, replies, is_edited, is_sticky, depth, path, seq) AS (
             (
-            SELECT *, 0, ARRAY[id], ARRAY[${orphanSeq}]
+            SELECT *, 0, ARRAY[id], ARRAY[(NOT is_sticky)::INT, ${orphanSeq}]
             FROM posts
             WHERE ${parentNode}
-            ORDER BY ${orphanSort}
+            ORDER BY is_sticky DESC, ${orphanSort}
             LIMIT ${LIMIT + 1} OFFSET ${offset}
             )
             UNION ALL
@@ -68,11 +68,13 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
             votes,
             replies,
             is_edited,
+            is_sticky,
             depth,
             path,
             users.name,
             users.avatar_url,
-            users.url
+            users.url,
+            seq
             ${user_id ? ', is_up': ''}
         FROM cte
         LEFT JOIN users ON cte.user_id = users.id

@@ -32,6 +32,7 @@ POSTS=$($PSQL '
         votes INT DEFAULT 0,
         replies INT DEFAULT 0,
         is_edited BOOL DEFAULT false,
+        is_sticky BOOL DEFAULT false,
         PRIMARY KEY (id),
         FOREIGN KEY (parent_id) REFERENCES posts (id),
         FOREIGN KEY (user_id) REFERENCES users (id)
@@ -63,10 +64,10 @@ COUNT_VOTES=$($PSQL '
     AS $$
 	BEGIN
 		WITH sum AS
-			(SELECT SUM(CASE is_up WHEN TRUE THEN 1 ELSE -1 END) AS votes
+			(SELECT SUM(CASE is_up WHEN TRUE THEN 1 WHEN FALSE THEN -1 ELSE 0 END) AS votes
 			FROM upvotes 
 			WHERE post_id = COALESCE(NEW.post_id, OLD.post_id))
-		UPDATE posts SET votes = sum.votes
+		UPDATE posts SET votes = COALESCE(sum.votes, 0)
 		FROM sum
 		WHERE id = COALESCE(NEW.post_id, OLD.post_id);
 		RETURN NEW;
@@ -178,10 +179,8 @@ INSERT_SAHAND_RESULT=$($PSQL "
         )
     RETURNING id
 ")
-IFS="|" read ID <<< $INSERT_SAHAND_RESULT
-echo "USER: 'SAHAND', ID:" $ID 
-
-echo
+IFS="|" read SAHAND_ID <<< $INSERT_SAHAND_RESULT
+echo "USER: 'SAHAND', ID:" $SAHAND_ID 
 
 UPVOTES_ADDED=0
 {
@@ -202,3 +201,19 @@ UPVOTES_ADDED=0
 } < upvotes.csv
 
 echo -e "\n"
+
+INSERT_SAHAND_POST=$($PSQL "
+    INSERT INTO posts (user_id, text, is_sticky)
+    VALUES(
+        $SAHAND_ID,
+        'Hey everyone!
+        Thank you for checking out my project, I would appreciate it if you left a comment and told me what you think of the result.
+        Enjoy, and have a nice day! ;)',
+        true
+    )
+")
+if [[ ($INSERT_SAHAND_POST = "INSERT 0 1") ]]
+    then echo "INTRO POST --> SAHAND"
+fi
+
+echo
