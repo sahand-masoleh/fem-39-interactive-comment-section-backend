@@ -82,7 +82,7 @@ router.patch("/", authorize, async (req, res, next) => {
 		const { rows } = await db.query(
 			`
 			UPDATE posts
-			SET text = $1
+			SET text = $1, is_edited = true
 			WHERE id = $2 AND user_id = $3
 			RETURNING id, text
 			`,

@@ -46,7 +46,7 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
 	// prettier-ignore
 	return `
         WITH RECURSIVE
-        cte (id, parent_id, user_id, text, date, votes, replies, depth, path, seq) AS (
+        cte (id, parent_id, user_id, text, date, votes, replies, is_edited, depth, path, seq) AS (
             (
             SELECT *, 0, ARRAY[id], ARRAY[${orphanSeq}]
             FROM posts
@@ -60,7 +60,20 @@ function getQuery(from = 0, sort_by, order, page = 0, user_id) {
             WHERE cte.id = t2.parent_id AND depth < ${DEPTH}
         ) 
         SELECT
-            cte.id, parent_id, user_id, text, date, votes, replies, depth, path, users.name, users.avatar_url, users.url${user_id ? ', is_up': ''}
+            cte.id,
+            parent_id,
+            user_id,
+            text,
+            date,
+            votes,
+            replies,
+            is_edited,
+            depth,
+            path,
+            users.name,
+            users.avatar_url,
+            users.url
+            ${user_id ? ', is_up': ''}
         FROM cte
         LEFT JOIN users ON cte.user_id = users.id
         ${user_id ? `

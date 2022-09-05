@@ -31,6 +31,7 @@ POSTS=$($PSQL '
         date TIMESTAMPTZ DEFAULT NOW() NOT NULL,
         votes INT DEFAULT 0,
         replies INT DEFAULT 0,
+        is_edited BOOL DEFAULT false,
         PRIMARY KEY (id),
         FOREIGN KEY (parent_id) REFERENCES posts (id),
         FOREIGN KEY (user_id) REFERENCES users (id)
@@ -43,9 +44,9 @@ fi
 
 UPVOTES=$($PSQL '
     CREATE TABLE upvotes (
-        post_id integer NOT NULL,
-        user_id integer NOT NULL,
-        is_up boolean NOT NULL,
+        post_id INT NOT NULL,
+        user_id INT NOT NULL,
+        is_up BOOL NOT NULL,
         PRIMARY KEY (post_id, user_id),
         FOREIGN KEY (post_id) REFERENCES posts (id),
         FOREIGN KEY (user_id) REFERENCES users (id)
@@ -164,6 +165,21 @@ POSTS_ADDED=0
 	echo -ne "added $USERS_ADDED users and $POSTS_ADDED posts"\\r
     done    
 } < data.csv
+
+echo
+
+INSERT_SAHAND_RESULT=$($PSQL "
+    INSERT INTO users (name, github_id, avatar_url, url)
+    VALUES (
+        'Sahand Masoleh',
+        63850404,
+        'https://avatars.githubusercontent.com/u/63850404?v=4',
+        'https://github.com/sahand-masoleh'
+        )
+    RETURNING id
+")
+IFS="|" read ID <<< $INSERT_SAHAND_RESULT
+echo "USER: 'SAHAND', ID:" $ID 
 
 echo
 
