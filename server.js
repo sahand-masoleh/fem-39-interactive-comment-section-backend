@@ -9,7 +9,17 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const cors = require("cors");
-app.use(cors({ origin: true, credentials: true }));
+app.use(
+	cors({
+		origin:
+			process.env.NODE_ENV === "development"
+				? true
+				: process.env.NODE_ENV === "production"
+				? process.env.ORIGIN
+				: false,
+		credentials: true,
+	})
+);
 
 app.get("/", (req, res) => {
 	res.send("Nothing to see here...");

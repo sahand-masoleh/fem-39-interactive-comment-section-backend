@@ -9,7 +9,7 @@ const DEPTH = 3;
 function getQuery(from = 0, sort_by, order, page = 0, user_id) {
 	const offset = LIMIT * page;
 	// start from a specific post if viewing deeper than max depth
-	const parentNode = !from ? "parent_id IS NULL" : `id = ${from}`;
+	const parentNode = from === 0 ? "parent_id IS NULL" : `id = ${from}`;
 
 	let orphanSeq;
 	let orphanSort;

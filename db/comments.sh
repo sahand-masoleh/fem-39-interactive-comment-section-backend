@@ -107,7 +107,7 @@ NEW_REPLY=$($PSQL '
     FOR EACH ROW EXECUTE FUNCTION count_replies()
 ')
 if [[ ($COUNT_REPLIES = "CREATE FUNCTION") && ($COUNT_REPLIES_OWNER = "ALTER FUNCTION" && $NEW_REPLY = "CREATE TRIGGER") ]]
-    then echo "TRIGGER: new_upvote --> $OWNER"
+    then echo "TRIGGER: new_reply --> $OWNER"
 fi
 
 INSERT_DELETED_USER=$($PSQL "INSERT INTO users (name) VALUES ('')")

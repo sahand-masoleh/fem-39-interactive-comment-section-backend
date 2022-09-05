@@ -4,3 +4,5 @@
 *.sql
 *.csv
 *.ods
+*.dump
+/db/comments-heroku.sh

@@ -8,6 +8,12 @@ const authorize = require("@middleware/authorize");
 
 const GH_ACCESS = new URL("login/oauth/access_token", "https://github.com");
 const GH_INFO = new URL("user", "https://api.github.com");
+const DOMAIN =
+	process.env.NODE_ENV === "development"
+		? "localhost"
+		: process.env.NODE_ENV === "production"
+		? process.env.DOMAIN
+		: null;
 
 router.get("/check", authorize, async (req, res, next) => {
 	const { user_id } = req;
@@ -22,7 +28,7 @@ router.get("/check", authorize, async (req, res, next) => {
 			[user_id]
 		);
 		if (!rows[0]) {
-			res.clearCookie("token", { domain: "localhost", path: "/" });
+			res.clearCookie("token", { domain: DOMAIN, path: "/" });
 			throw new ErrorWithStatus("user deleted", 410);
 		}
 		res.json(rows[0]);
@@ -85,7 +91,7 @@ router.post("/login", async (req, res, next) => {
 		const token = jwt.sign({ id }, process.env.JWT_SECRET);
 
 		res.cookie("token", token, {
-			domain: "localhost",
+			domain: DOMAIN,
 			path: "/",
 			sameSite: "none",
 			secure: true,
@@ -97,7 +103,7 @@ router.post("/login", async (req, res, next) => {
 });
 
 router.post("/logout", (_, res) => {
-	res.clearCookie("token", { domain: "localhost", path: "/" });
+	res.clearCookie("token", { domain: DOMAIN, path: "/" });
 	res.end();
 });
 

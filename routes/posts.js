@@ -13,9 +13,23 @@ router.get("/", async (req, res, next) => {
 	} catch {}
 
 	try {
-		const { from = 0, sort_by = "score", order = "asc", page = 0 } = req.query;
-		// TODO: check if queries are valid
-		const query = getQuery(from * 1, sort_by, order, page, user_id);
+		const {
+			from = "0",
+			sort_by = "score",
+			order = "asc",
+			page = "0",
+		} = req.query;
+
+		if (
+			!/^\d+$/.test(from) ||
+			!/^\d+$/.test(page) ||
+			!["score", "date"].includes(sort_by) ||
+			!["asc", "desc"].includes(order)
+		) {
+			throw new ErrorWithStatus("invalid arguments", 400);
+		}
+
+		const query = getQuery(from * 1, sort_by, order, page * 1, user_id);
 		const { rows } = await db.query(query);
 
 		// to see if there are more page
