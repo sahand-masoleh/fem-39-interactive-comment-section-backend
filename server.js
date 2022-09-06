@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const cors = require("cors");
+
 app.use(
 	cors({
 		origin:

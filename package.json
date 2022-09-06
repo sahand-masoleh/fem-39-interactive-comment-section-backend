@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"description": "Backend for the Interactive Comment Section challenge from frontendmentor.io",
 	"main": "server.js",
+	"engines": {
+		"node": "18.x"
+	},
 	"scripts": {
 		"start": "node server.js",
 		"dev": "nodemon -r dotenv/config server.js",

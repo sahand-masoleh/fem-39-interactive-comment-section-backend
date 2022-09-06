@@ -5,4 +5,4 @@
 *.csv
 *.ods
 *.dump
-/db/comments-heroku.sh
+/db/heroku

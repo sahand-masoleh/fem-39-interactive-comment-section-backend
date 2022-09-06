@@ -8,12 +8,7 @@ const authorize = require("@middleware/authorize");
 
 const GH_ACCESS = new URL("login/oauth/access_token", "https://github.com");
 const GH_INFO = new URL("user", "https://api.github.com");
-const DOMAIN =
-	process.env.NODE_ENV === "development"
-		? "localhost"
-		: process.env.NODE_ENV === "production"
-		? process.env.DOMAIN
-		: null;
+const DOMAIN = process.env.DOMAIN;
 
 router.get("/check", authorize, async (req, res, next) => {
 	const { user_id } = req;
@@ -96,7 +91,7 @@ router.post("/login", async (req, res, next) => {
 			sameSite: "none",
 			secure: true,
 		});
-		res.redirect("../users/check");
+		res.end();
 	} catch (error) {
 		next(error);
 	}
