@@ -56,18 +56,18 @@ router.post("/login", async (req, res, next) => {
 			throw new ErrorWithStatus("authentication failed", 401);
 		}
 
-		const ghUserInfo = await fetch(GH_INFO, {
+		let ghUserInfo = await fetch(GH_INFO, {
 			headers: {
 				Authorization: `token ${access_token}`,
 			},
 		});
+		ghUserInfo = await ghUserInfo.json();
 
-		const {
-			id: githubId,
-			avatar_url,
-			html_url: url,
-			name,
-		} = await ghUserInfo.json();
+		let { id: githubId, avatar_url, html_url: url, name, login } = ghUserInfo;
+		// GitHub accounts mayb have no name
+		if (!name) {
+			name = login;
+		}
 
 		const dbUpsert = await db.query(
 			`
